@@ -20,11 +20,9 @@
  `Connection: keep-alive`  
  `Accept: */*`
 
-
-
-
 ### 요구사항 2 - get 방식으로 회원가입
-* 
+* `http://localhost:8080/user/create?userId=devmonkey80&password=1234&name=ljj&email=devmonkey80%40gmail.com`
+* 회원가입 시 현재 위와같은 URL 이 서버에 전달되는데 사용자가 입력한 값을 parsing 하여 model.User class 에 저장한다.
 
 ### 요구사항 3 - post 방식으로 회원가입
 * 
