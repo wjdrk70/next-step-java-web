@@ -59,7 +59,7 @@ public class HttpRequestUtils {
         }
 
         String[] tokens = requestLine.split(" ");
-        if (tokens.length < 2) {
+        if (tokens.length < 3) {
             return null;
         }
 

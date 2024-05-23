@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
     private static final String BASE_ROOT = "webapp";
+    private static final String DEFAULT_FILE = "index.html";
 
     private Socket connection;
 
@@ -37,22 +38,19 @@ public class RequestHandler extends Thread {
 
             DataOutputStream dataOutputStream = new DataOutputStream(out);
 
-            if (path.equals("/index.html")) {
-                File file = new File(BASE_ROOT + path);
-                if (file.exists() && !file.isDirectory()) {
-                    byte[] body = Files.readAllBytes(file.toPath());
-                    response200Header(dataOutputStream, body.length);
-                    responseBody(dataOutputStream, body);
-                } else {
-                    response404Header(dataOutputStream);
-                    responseBody(dataOutputStream, "404 Not Found".getBytes());
-                }
-
-            } else {
-                byte[] body = "Hello World".getBytes();
+            if (path == null || path.equals("/")) {
+                path = "/" + DEFAULT_FILE;
+            }
+            File file = new File(BASE_ROOT + path);
+            if (file.exists() && !file.isDirectory()) {
+                byte[] body = Files.readAllBytes(file.toPath());
                 response200Header(dataOutputStream, body.length);
                 responseBody(dataOutputStream, body);
+            } else {
+                response404Header(dataOutputStream);
+                responseBody(dataOutputStream, "404 Not Found".getBytes());
             }
+
 
         } catch (IOException e) {
             log.error(e.getMessage());
