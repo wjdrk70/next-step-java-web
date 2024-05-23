@@ -19,7 +19,7 @@ dependencies {
 
 group = 'org.ljj'
 version = '1.0'
-description='web-application-server'
+description = 'web-application-server'
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 tasks.withType(JavaCompile) {
@@ -30,8 +30,6 @@ tasks.withType(Javadoc) {
     options.encoding = 'UTF-8'
 }
 
-
-
-test {
+tasks.named('test') {
     useJUnitPlatform()
 }

@@ -53,6 +53,19 @@ public class HttpRequestUtils {
         return getKeyValue(header, ": ");
     }
 
+    public  static String extractPath(String requestLine) {
+        if (requestLine == null || requestLine.isEmpty()) {
+            return null;
+        }
+
+        String[] tokens = requestLine.split(" ");
+        if (tokens.length < 2) {
+            return null;
+        }
+
+        return tokens[1];
+    }
+
     public static class Pair {
         String key;
         String value;
@@ -61,6 +74,8 @@ public class HttpRequestUtils {
             this.key = key.trim();
             this.value = value.trim();
         }
+
+
 
         public String getKey() {
             return key;

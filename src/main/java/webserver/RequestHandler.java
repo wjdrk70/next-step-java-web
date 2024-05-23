@@ -2,13 +2,16 @@ package webserver;
 
 import java.io.*;
 import java.net.Socket;
-import java.net.http.HttpRequest;
+import java.nio.file.Files;
+
+import util.HttpRequestUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
+    private static final String BASE_ROOT = "webapp";
 
     private Socket connection;
 
@@ -21,17 +24,36 @@ public class RequestHandler extends Thread {
                 connection.getPort());
 
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
-
-//            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-//            String requestLine = reader.readLine();
-//            String[] ports = requestLine.split(" ");
-//            String method = ports[0];
-//            String filePath = ports[1];
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
-            DataOutputStream dos = new DataOutputStream(out);
-            byte[] body = "Hello World".getBytes();
-            response200Header(dos, body.length);
-            responseBody(dos, body);
+
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
+            String requestLine = bufferedReader.readLine();
+
+            log.debug("Request Line= {}", requestLine);
+
+
+            String path = HttpRequestUtils.extractPath(requestLine);
+            log.debug("Path= {}", path);
+
+            DataOutputStream dataOutputStream = new DataOutputStream(out);
+
+            if (path.equals("/index.html")) {
+                File file = new File(BASE_ROOT + path);
+                if (file.exists() && !file.isDirectory()) {
+                    byte[] body = Files.readAllBytes(file.toPath());
+                    response200Header(dataOutputStream, body.length);
+                    responseBody(dataOutputStream, body);
+                } else {
+                    response404Header(dataOutputStream);
+                    responseBody(dataOutputStream, "404 Not Found".getBytes());
+                }
+
+            } else {
+                byte[] body = "Hello World".getBytes();
+                response200Header(dataOutputStream, body.length);
+                responseBody(dataOutputStream, body);
+            }
+
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -56,4 +78,15 @@ public class RequestHandler extends Thread {
             log.error(e.getMessage());
         }
     }
+
+    private void response404Header(DataOutputStream dos) {
+        try {
+            dos.writeBytes("HTTP/1.1 404 Not Found \r\n");
+            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
 }
+
