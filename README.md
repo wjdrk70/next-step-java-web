@@ -26,7 +26,16 @@
 * 여기서도 단위테스트와 TDD 방법론을 써서 구현해보자 최대한!
 
 ### 요구사항 3 - post 방식으로 회원가입
-* 
+```
+  POST /user/create HTTP/1.1
+  Host: localhost:8080
+  Connection: keep-alive
+  Content-Length: 59
+  Content-Type: application/x-www-form-urlencoded
+  Accept: */* 
+  
+  userId=wjdrk70&password=password&anme=ljj
+  ```
 
 ### 요구사항 4 - redirect 방식으로 이동
 * 

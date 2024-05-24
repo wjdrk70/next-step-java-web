@@ -5,10 +5,9 @@ import java.net.Socket;
 import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.util.Map;
-
 import model.User;
 import util.HttpRequestUtils;
-
+import util.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,22 +23,18 @@ public class RequestHandler extends Thread {
     }
 
     public void run() {
-        log.debug("connection : {}",connection);
-        log.debug("New Client Connect! Connected IP : {}, Port : {}", connection.getInetAddress(),
-                connection.getPort());
+        log.debug("connection : {}", connection);
+        log.debug("New Client Connect! Connected IP : {}, Port : {}", connection.getInetAddress(), connection.getPort());
 
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
-            // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
-
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
             String requestLine = bufferedReader.readLine();
-
             log.debug("Request Line= {}", requestLine);
 
-
             String path = HttpRequestUtils.extractPath(requestLine);
-            String method= HttpRequestUtils.extractMethod(requestLine);
+            String method = HttpRequestUtils.extractMethod(requestLine);
             log.debug("Path= {}", path);
+            log.debug("Method= {}", method);
 
             DataOutputStream dataOutputStream = new DataOutputStream(out);
 
@@ -47,36 +42,41 @@ public class RequestHandler extends Thread {
                 path = "/" + DEFAULT_FILE;
             }
 
-            if(method.equals("GET")) {
-     log.debug("method : {}",method);
-                if (path.startsWith("/user/create")) {
-                    handleUserCreateRequest(path, dataOutputStream);
+            if (method.equals("POST")) {
+                log.debug("method : {}", method);
+                if (path.equals("/user/create")) {
+                    handleUserCreateRequest(bufferedReader, dataOutputStream);
                 } else {
-
-                    File file = new File(BASE_ROOT + path);
-                    if (file.exists() && !file.isDirectory()) {
-                        byte[] body = Files.readAllBytes(file.toPath());
-                        response200Header(dataOutputStream, body.length);
-                        responseBody(dataOutputStream, body);
-                    } else {
-                        response404Header(dataOutputStream);
-                        responseBody(dataOutputStream, "404 Not Found".getBytes());
-                    }
-
+                    handleFileRequest(path, dataOutputStream);
                 }
-            }else {
-
+            } else if (method.equals("GET")) {
+                handleFileRequest(path, dataOutputStream);
+            } else {
+                // Other methods can be handled here
+                response404Header(dataOutputStream);
+                responseBody(dataOutputStream, "404 Not Found".getBytes());
             }
         } catch (IOException e) {
             log.error(e.getMessage());
         }
     }
 
-
-    private void handleUserCreateRequest(String path, DataOutputStream dos) {
+    private void handleUserCreateRequest(BufferedReader bufferedReader, DataOutputStream dos) {
         try {
-            String queryString = path.split("\\?")[1];
-            Map<String, String> parameters = HttpRequestUtils.parseQueryString(URLDecoder.decode(queryString, "UTF-8"));
+            String line;
+            int contentLength = 0;
+
+            // 헤더 읽기
+            while (!(line = bufferedReader.readLine()).equals("")) {
+                if (line.startsWith("Content-Length:")) {
+                    contentLength = Integer.parseInt(line.split(":")[1].trim());
+                }
+            }
+
+            // 본문 읽기
+            String body = IOUtils.readData(bufferedReader, contentLength);
+            log.debug("body user : {}",body);
+            Map<String, String> parameters = HttpRequestUtils.parseQueryString(URLDecoder.decode(body, "UTF-8"));
             User user = new User(parameters.get("userId"), parameters.get("password"), parameters.get("name"), parameters.get("email"));
             log.debug("User Created: {}", user);
 
@@ -87,6 +87,20 @@ public class RequestHandler extends Thread {
             log.error("Error in handleUserCreateRequest", e);
             response500Header(dos);
             responseBody(dos, "500 Internal Server Error".getBytes());
+        }
+    }
+
+    private void handleFileRequest(String path, DataOutputStream dos) throws IOException {
+        File file = new File(BASE_ROOT, path);
+        log.debug("Requested file: {}", file.getAbsolutePath());
+        if (file.exists() && !file.isDirectory()) {
+            byte[] body = Files.readAllBytes(file.toPath());
+            String contentType = Files.probeContentType(file.toPath());
+            response200Header(dos, body.length);
+            responseBody(dos, body);
+        } else {
+            response404Header(dos);
+            responseBody(dos, "404 Not Found".getBytes());
         }
     }
 
@@ -129,6 +143,4 @@ public class RequestHandler extends Thread {
             log.error(e.getMessage());
         }
     }
-
 }
-
