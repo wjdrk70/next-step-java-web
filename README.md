@@ -15,10 +15,15 @@
 * 각 요구사항을 구현하는 것이 중요한 것이 아니라 구현 과정을 통해 학습한 내용을 인식하는 것이 배움에 중요하다. 
 
 ### 요구사항 1 - http://localhost:8080/index.html로 접속시 응답
-* complete
+* BufferedReader 로 라인별 HTTP 요청 정보를 읽는다.
+* null 일 들아왔을시도 확인 및 체크를 해야한다.
+* 문자열 분리시 Test 코드를 작성해보자 여기서 TDD 를 활용해보는것도 Best 이다.
+* webapp 이나 index.html 의 DEFAULT 값은 Magic number 나 Magic String 이 되지 않게한다.
 
 ### 요구사항 2 - get 방식으로 회원가입
-* 
+* HTTP 요청의 첫 번째 라인에서 요청 URL을 추출함
+* 접근 경로와 property=value 로 전달되는 데이터를 추출해 User class 에 담는다.
+* 여기서도 단위테스트와 TDD 방법론을 써서 구현해보자 최대한!
 
 ### 요구사항 3 - post 방식으로 회원가입
 * 
